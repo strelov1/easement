@@ -70,7 +70,7 @@ In Claude Code it is also a plugin:
 
 ## Status
 
-Go, TypeScript/JavaScript, Python, Rust, PHP, Java, C# and Ruby are resolved by [SCIP](https://scip-code.org/) indexers, so they need the [indexers](#indexers) installed; Kotlin and Swift are read with tree-sitter.
+Go, TypeScript/JavaScript, Python, Rust, PHP, Java, C# and Ruby are resolved by [SCIP](https://scip-code.org/) indexers, so they need the [indexers](#indexers) installed; Kotlin, Swift and Svelte components are read with tree-sitter.
 
 ## Usage
 
@@ -805,6 +805,8 @@ Rust: the dependency of a line is the deepest module it names, `std`, `core` and
 
 Kotlin is still read with tree-sitter: `scip-java`'s Kotlin plugin fails with a `NoClassDefFoundError` on every Kotlin compiler from 1.9 to 2.3 that I tried, so there is no indexer to use yet. References by fully qualified name without an import are not seen. Swift modules declared with a custom `path:` in `Package.swift` are not found.
 
+Svelte components are read with tree-sitter too: no SCIP indexer reads a `.svelte` file. The imports of its `<script>` blocks resolve as Vite and TypeScript resolve them: a relative path, a subpath import of the nearest `package.json` (`#lib/*`), or a `paths` alias of its `tsconfig.json` and of the `.svelte-kit/tsconfig.json` SvelteKit generates (`$lib`); `./api.js` names `./api.ts`. A `tsconfig.json` `extends` is not followed. An import of a `.svelte` file written in a TypeScript file is left out of the TypeScript index, so that dependency is not seen yet.
+
 Adding a language starts with its entry in `src/lang/registry.rs`: its extensions, test files, standard library, whether `unused` can judge it and its manifest, which the rules read from there. An indexed language then names its indexer and the marker file it runs in (`src/indexer.rs`) and maps its symbols to module names (`src/scip/symbol.rs`). A language that has no indexer can still be read with a tree-sitter adapter (`src/lang/`): extract imports from a file, resolve a specifier to a project path or an external module. Rules, baseline and reports are language-agnostic.
 
 ### Index cache
@@ -883,7 +885,7 @@ uncovered_ok:
 
 ## How it works
 
-1. Walk the project. For Go, TypeScript, Python, Rust, PHP, Java, C# and Ruby run the SCIP indexer and read the index; for Kotlin and Swift parse each file with tree-sitter and collect imports.
+1. Walk the project. For Go, TypeScript, Python, Rust, PHP, Java, C# and Ruby run the SCIP indexer and read the index; for Kotlin, Swift and Svelte parse each file with tree-sitter and collect imports.
 2. Turn every reference to a module into a dependency on a file inside the project, or on an external module.
 3. Map both ends to components and check each edge against the rules.
 4. Compare violations with the baseline and report.
